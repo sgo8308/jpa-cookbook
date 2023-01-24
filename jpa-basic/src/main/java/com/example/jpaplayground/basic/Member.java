@@ -142,14 +142,14 @@ public class Member extends BaseEntity {
     /**
      * #jpabasic Cascade, OrphanRemoval
      *
-     * - Cascade  : 부모를 entityManager.persist() 또는 삭제 할 때 자식도 같이 하게 해주어 편리하게 해주는 옵션
+     * - Cascade : 부모를 entityManager.persist() 또는 삭제 할 때 자식도 같이 하게 해주어 편리하게 해주는 옵션
      *
-     * Cascade .ALL의 경우 저장과 삭제 둘 다.
+     * Cascade.ALL의 경우 저장과 삭제 둘 다.
      * 반드시 부모와  자식이 완전히 종속된 관계에서만 사용한다.
      * 다른 엔티티가  이 자식을 알고 있다면 사용하면 안됨. 특정 엔티티가 개인 소유할 때 !
-     * ophanRe movel은 부모가 삭제 되었을 대 뿐만이 아니라 관계가 끊어졌을 대도 자식이 삭제 된다는 점에서 차이가 있다.
+     * orphanRemovel은 부모가 삭제 되었을 때 뿐만이 아니라 관계가 끊어졌을 때도 자식이 삭제 된다는 점에서 차이가 있다.
      *
-     * Cascade-.PERSIST의 경우 저장만 같이.
+     * Cascade.PERSIST의 경우 저장만 같이.
      *
      * - orphanRemoval : 부모가 없어진 엔티티는 DB에 delete 쿼리가 나가게끔 동작시키는 옵션.
      * 예를 들어 balls.remove(2) 할 경우 2번 인덱스의 자식은 고아가 되고 delete 쿼리가 나가게 된다.
