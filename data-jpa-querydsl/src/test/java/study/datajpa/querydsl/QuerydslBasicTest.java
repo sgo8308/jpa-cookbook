@@ -158,6 +158,7 @@ public class QuerydslBasicTest {
         Member findMember1 = queryFactory
                 .selectFrom(member)
                 .fetchOne();
+
         //처음 한 건 조회
         Member findMember2 = queryFactory
                 .selectFrom(member)

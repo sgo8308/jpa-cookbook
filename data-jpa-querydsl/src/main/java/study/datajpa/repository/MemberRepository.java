@@ -66,7 +66,7 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
      *
      * 다음과 같이 사용하지만 QueryDSL을 사용하면 번거로운 new ~는 필요없다.
      */
-    @Query("select new study.datajpa.dto.MemberDto(m.id, m.name, t.name) " +
+    @Query("select new study.datajpa.dto.datajpa.MemberDto(m.id, m.name, t.name) " +
             "from Member m join m.team t")
     List<MemberDto> findMemberDto();
 
