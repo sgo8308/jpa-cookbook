@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="VcsDirectoryMappings">
-    <mapping directory="$PROJECT_DIR$/.." vcs="Git" />
-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../../김영한 스프링 강의/스프링 데이터 JPA/data-jpa" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../../김영한 스프링 강의/스프링 부트와 JPA 활용 1/jpashop-v20210728/jpashop-v20210728" vcs="Git" />
-  </component>
-</project>
