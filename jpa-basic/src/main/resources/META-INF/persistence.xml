@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.2"
+             xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+    <persistence-unit name="hello">
+        <class>com.example.jpaplayground.basic.Member</class>
+        <class>com.example.jpaplayground.basic.Team</class>
+        <class>com.example.jpaplayground.basic.Locker</class>
+        <class>com.example.jpaplayground.basic.Ball</class>
+        <class>com.example.jpaplayground.inheritance.Item</class>
+        <class>com.example.jpaplayground.inheritance.Book</class>
+        <class>com.example.jpaplayground.valuetype.User</class>
+        <class>com.example.jpaplayground.valuetype.Address</class>
+        <class>com.example.jpaplayground.valuetype.AddressEntity</class>
+        <properties>
+            <!-- 필수 속성 -->
+            <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
+            <property name="javax.persistence.jdbc.user" value="jiwoo"/>
+            <property name="javax.persistence.jdbc.password" value="123123"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/db_example"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
+            <!-- 옵션-->
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.use_sql_comments" value="true"/>
+            <property name="hibernate.jdbc.batch_size" value="10"/> <!-- insert시 한 번에 몇개까지 bulk insert를 할 것인지 -->
+            <!-- 테이블 자동 생성 옵션 create는 테이블이 이미 존재할 경우 만드는 옵션
+            create => 테이블이 이미 존재할 경우 새로 생성
+            create-drop => 테이블을 마지막에 drop
+            validate => 엔티티와 테이블이 제대로 매칭되는지만 확인
+            update => 변경분만 기존 테이블에 alter table
+            * 운영 장비에는 절대로 create, create-drop, update를 사용하면 안된다.-->
+            <property name="hibernate.hbm2ddl.auto" value="create" />
+        </properties>
+    </persistence-unit>
+
+    <persistence-unit name="jpql">
+        <class>com.example.jpaplayground.jpql.Room</class>
+        <class>com.example.jpaplayground.jpql.Human</class>
+        <class>com.example.jpaplayground.jpql.SuperMarket</class>
+        <class>com.example.jpaplayground.jpql.Mentor</class>
+        <properties>
+            <!-- 필수 속성 -->
+            <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
+            <property name="javax.persistence.jdbc.user" value="jiwoo"/>
+            <property name="javax.persistence.jdbc.password" value="123123"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/db_example"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
+            <!-- 옵션-->
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.use_sql_comments" value="true"/>
+            <property name="hibernate.jdbc.batch_size" value="10"/>
+            <property name="hibernate.hbm2ddl.auto" value="create" />
+        </properties>
+    </persistence-unit>
+</persistence>
