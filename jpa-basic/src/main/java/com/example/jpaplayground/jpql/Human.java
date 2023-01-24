@@ -1,6 +1,5 @@
 package com.example.jpaplayground.jpql;
 
-import com.example.jpaplayground.JPQLTest;
 import com.example.jpaplayground.valuetype.Address;
 import java.util.ArrayList;
 import java.util.List;
