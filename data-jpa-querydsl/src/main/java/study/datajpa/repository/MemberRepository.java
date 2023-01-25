@@ -142,7 +142,7 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
 
 
     /**
-     * #datajpa @EntityGraph - fetch join을 data jpa에서 편리하게 쓰자. 간단할 땐 @EntityGraph 복잡할 땐 fetch join
+     * #datajpa @EntityGraph - fetch join을 data jpa에서 편리하게 쓰자. 쿼리가 간단할 땐 @EntityGraph 복잡할 땐 fetch join
      *
      * fetch join으로 left outer join해서 나간다.
      */
