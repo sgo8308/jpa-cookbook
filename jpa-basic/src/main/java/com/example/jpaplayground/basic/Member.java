@@ -160,6 +160,19 @@ public class Member extends BaseEntity {
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ball> balls = new ArrayList<>(); // 관례상 바로 초기화를 해주는 것이 좋다. 그래야 예기치 못한 Null예외가 터지지 않는다.
 
+    /**
+     * #jpabasic 일대다 단방향
+     *
+     * 일대다 단방향 관계는 피하는 것이 좋다.
+     * 왜냐하면 외래키는 Like 테이블에 존재하지만 이 외래키를 관리하는 주체는 Member이기 때문에 직관적이지 않아 유지보수가 어렵다.
+     * 또 Like는 Member를 모른다. 따라서 insert시 member_id를 같이 넣을 수 없다. 항상 Member가 likes.add()할 때만 Like 테이블에 update 쿼리를 날리는 방식으로 동작한다.
+     *
+     * 즉 유지보수에 어렵고 추가적인 update 쿼리가 나가기 때문에 일대다 단방향은 피하는 것이 좋고, 이럴 때는 객체지향적으로 조금 손해를 보더라도 다대일 양방향 관계로 가져가자.
+     */
+    @OneToMany
+    @JoinColumn(name = "member_id")
+    private List<Like> likes = new ArrayList<>(); // 관례상 바로 초기화를 해주는 것이 좋다. 그래야 예기치 못한 Null예외가 터지지 않는다.
+
 
     /**
      * #jpabasic 연관 관계 편의 메서드 - 양방향 연관 관계에서만 필요하다.
