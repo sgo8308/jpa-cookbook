@@ -183,11 +183,12 @@ public class Member extends BaseEntity {
      * 연관관계 편의 메서드는 Member와 Team 둘 중에 한 쪽에만 만든다. 왜냐하면 잘못하면 무한루프 걸릴 수도 있고 신경쓸 게 많아진다.
     */
     private void changeTeam(Team team){
+        if (this.team != null) { // 기존에 이미 팀이 존재한다면
+            this.team.getMembers().remove(this); // 관계를 끊는다.
+        }
+
         this.team = team;
         team.getMembers().add(this);
-
-        //... 복잡하게 할 때는 team에 이전에 넣어 놓은 이 Member랑 같은 id를 가진 Member가 있는지 확인하고
-        //... 이렇게 작업이 필요할 수도 있음
     }
 
     public Member() { // protected 이상의 기본 생성자는 필수, 내부적으로 Reflection을 쓰서 동적으로 객체를 생성해내야 하기 때문에
