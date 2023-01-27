@@ -5,6 +5,13 @@ spring:
     password: 123123
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+# * #jpa-springboot 페이징 설정
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        one-indexed-parameters: true # 페이징을 1페이지부터 가능하게 함(그러나 리턴되는 Page객체에는 그대로 표시되니 주의)
+
   jpa:
     hibernate:
       ddl-auto: create
