@@ -26,6 +26,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import jdk.jfr.Frequency;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
 /**
  * #jpabasic jpa에 대한 기본을 알려주는 클래스
@@ -38,6 +40,22 @@ import jdk.jfr.Frequency;
   initialValue = 1,
   allocationSize = 50 // 몇 개까지 미리 시퀀스를 땡겨올지, 미리 땡긴 후 그 다음부터는 DB가 아니라 메모리에서 시퀀스를 가지고 옴으로써 매 번 네트워크를 타고 시퀀스를 가져와야 하는 비용을 아낄 수 있다.
 )
+/**
+ * #jpabasic @DynamicInsert 데이터 삽입 시 Null이라면 쿼리에 포함하지 않기
+ *
+ * 기본 값이 있는 경우에 객체를 저장할 때 그 칼럼에 대해서는 값을 세팅하지 않는 경우가 있다.
+ * 이 때 JPA는 그런 것을 상관하지 않고 그 칼럼은 Null 값으로 세팅하여 insert를 진행한다.
+ * @DynamicInsert를 사용하면 Null값인 칼럼은 제외하고 insert 쿼리를 날린다.
+ * @DynamicUpdate를 사용하면 Null값인 칼럼은 제외하고 update 쿼리를 날린다.
+ *
+ * 이 방식 이외에도 @PrePersist를 이용할 수 있다.
+ *
+ *  @PrePersist
+ *  public void prePersist() {
+ *      this.likeCount = this.likeCount == null ? 0 : this.likeCount;
+ *  }
+ */
+@DynamicInsert
 public class Member extends BaseEntity {
 
     @Id
@@ -69,6 +87,8 @@ public class Member extends BaseEntity {
             unique = false, length = 10, columnDefinition = "varchar(100) default 'EMTPY'") // 위 옵션 외에 나머지는 애플리케이션이 처음 실행될 때 DDL 생성하는데만 영향을 준다.
     private String userName;
 
+    @Column(columnDefinition = "integer default 1") // 기본값 넣는 방법
+//    @ColumnDefault("1")
     private Integer age;
 
     @Enumerated(EnumType.STRING) //Enum type을 DB에 매핑할 때 DDL 자동 생성하는데 쓰임, Ordinal은 데이터가 꼬일 수 있으므로 절대 쓰지 말 것

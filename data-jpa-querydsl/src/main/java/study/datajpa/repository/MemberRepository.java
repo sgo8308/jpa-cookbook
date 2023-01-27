@@ -136,7 +136,6 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
      *     - 참고 : https://www.inflearn.com/questions/188207/modifying%EC%97%90-%EA%B4%80%ED%95%9C-%EC%A7%88%EB%AC%B8
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-
     @Query("update Member m set m.age = m.age + 1 where m.age > :age")
     int bulkAgePlus1GreaterThan(@Param("age") int age);
 
