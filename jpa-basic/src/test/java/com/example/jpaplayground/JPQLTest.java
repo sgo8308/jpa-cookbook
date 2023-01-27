@@ -40,7 +40,16 @@ public class JPQLTest {
      * EntityManager.find()를 통해 조회할 경우 영속성 컨텍스트를 먼저 확인 후 없으면 DB 접근. DB 접근해서 가져 온 Entity는 영속성 컨텍스트에 등록
      * 반면에 EntityManager.createQuery() 즉 JPQL을 통해 조회할 경우 일단 DB에서 조회(SELECT 쿼리 나감) 후 영속성 컨텍스트에 동일한 Entity 있을시 DB에서 가져온 Entity 폐기 후 영속성 컨텍스트의 Entity 반환
      */
+    @Test
+    void findByAge() {
+        Human human = new Human();
+        human.setAge(50);
+        em.persist(human);
 
+        em.find(Human.class, human.getId());
+        em.createQuery("select h from Human h where h.age = 50", Human.class)
+                .getSingleResult();
+    }
     @Test
     void parameterBinding() {
         // 파라미터 바인딩 : 동적으로 쿼리 속 변수 조정 가능
