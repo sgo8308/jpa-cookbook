@@ -21,10 +21,14 @@ import javax.persistence.PersistenceContext;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import study.datajpa.dto.querydsl.MemberDto;
@@ -37,6 +41,8 @@ import study.datajpa.entity.Member;
 import study.datajpa.entity.QMember;
 import study.datajpa.entity.QTeam;
 import study.datajpa.entity.Team;
+import study.datajpa.repository.MemberRepository;
+import study.datajpa.repository.MemberRepositoryCustomImpl;
 
 @SpringBootTest
 @Transactional
@@ -56,6 +62,9 @@ public class QuerydslBasicTest {
      * 참고 - ORM 표준 JPA 책 13.1 트랜잭션 범위의 영속성 컨텍스트
      */
     private JPAQueryFactory queryFactory;
+
+    @Autowired
+    MemberRepository memberRepository;
 
     @BeforeEach
     public void before() {
@@ -626,74 +635,18 @@ public class QuerydslBasicTest {
         //소문자로 변경해서 비교하기
         String result2 = queryFactory
                 .select(member.name)
-
                 .from(member)
 //                .where(member.name.eq(Expressions.stringTemplate("function('lower', {0})", member.name)))
                 .where(member.name.eq(member.name.lower())) // lower 같은 ansi 표준은 querydsl이 내장 중
                 .fetchFirst();
     }
 
-    /**
-     * #querydsl 페이징 - spring data jpa의 Page와 Pageable을 같이 쓰기
-     */
-    public Page<MemberTeamDto> searchPageSimple(MemberSearchCondition condition,
-            Pageable pageable) {
-        List<MemberTeamDto> content = queryFactory
-                .select(new QMemberTeamDto(
-                        member.id,
-                        member.name,
-                        member.age,
-                        team.id,
-                        team.name))
-                .from(member)
-                .leftJoin(member.team, team)
-                .where(usernameEq(condition.getUsername()),
-                        teamNameEq(condition.getTeamName()),
-                        ageGoe(condition.getAgeGoe()),
-                        ageLoe(condition.getAgeLoe()))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        Long total = queryFactory
-                .select(member.count())
-                .from(member)
-                .leftJoin(member.team, team)
-                .where(
-                        usernameEq(condition.getUsername()),
-                        teamNameEq(condition.getTeamName()),
-                        ageGoe(condition.getAgeGoe()),
-                        ageLoe(condition.getAgeLoe())
-                ).fetchOne();
-
-        return new PageImpl<>(content, pageable, total);
-
-        /*
-          Count 쿼리 최적화 - count 쿼리가 생략 가능한 경우 생략해서 처리
-          페이지 시작이면서 컨텐츠 사이즈가 페이지 사이즈보다 작을 때
-          마지막 페이지 일 때 (offset + 컨텐츠 사이즈를 더해서 전체 사이즈 구함)
-         */
-//        JPAQuery<Member> countQuery = queryFactory
-//                .select(member)
-//                .from(member)
-//                .leftJoin(member.team, team)
-//                .where(usernameEq(condition.getUsername()),
-//                        teamNameEq(condition.getTeamName()),
-//                        ageGoe(condition.getAgeGoe()),
-//                        ageLoe(condition.getAgeLoe()));
-//        return PageableExecutionUtils.getPage(content, pageable,
-//                countQuery::fetchOne);
+    @Test
+    void searchPageOrder() {
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Direction.DESC, "age"));
+//        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Direction.ASC, "name"));
+//        PageRequest pageRequest = PageRequest.of(0, 10); // 정렬 조건이 없을 때는 정렬하지 않음
+        memberRepository.searchPageOrder(pageRequest);
     }
 
-    private BooleanExpression teamNameEq(String teamName) {
-        return isEmpty(teamName) ? null : team.name.eq(teamName);
-    }
-
-    private BooleanExpression ageGoe(Integer ageGoe) {
-        return ageGoe == null ? null : member.age.goe(ageGoe);
-    }
-
-    private BooleanExpression ageLoe(Integer ageLoe) {
-        return ageLoe == null ? null : member.age.loe(ageLoe);
-    }
 }

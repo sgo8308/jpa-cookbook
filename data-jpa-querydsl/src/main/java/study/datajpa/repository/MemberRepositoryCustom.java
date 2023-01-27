@@ -1,6 +1,8 @@
 package study.datajpa.repository;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import study.datajpa.entity.Member;
 
 /**
@@ -19,5 +21,7 @@ import study.datajpa.entity.Member;
 public interface MemberRepositoryCustom {
 
     List<Member> findUserByNameWithMybatis(String name);
+
+    Page<Member> searchPageOrder(Pageable pageable);
 
 }
