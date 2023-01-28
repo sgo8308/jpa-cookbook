@@ -110,4 +110,22 @@ class MemberRepositoryTest {
         //then
         assertThat(nameById.get(0).getName()).isEqualTo("jeuse");
     }
+
+    @Test
+    void findMemByName(){
+        //given
+        Member member1 = new Member("jeuse", 15);
+        Member member2 = new Member("jiwoo", 13);
+        Member member3 = new Member("jiwoo", 9);
+
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+        memberRepository.save(member3);
+
+        em.clear();
+
+        //when
+        Member mem = memberRepository.findWithLockById(member1.getId()).get();
+        mem.setAge(200);
+    }
 }
