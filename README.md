@@ -24,7 +24,8 @@
 2. File -> Project Structure -> Modules에서 +버튼 클릭해서 나머지 모듈 등록
 3. Settings -> Build -> Build Tools -> Gradle 각 모듈마다 Build and run using: Intellij IDEA, Run test using: Intellij IDEA로 바꾸기 
 4. Settings -> Build -> Compiler -> Annotation Processors -> Enable annotation processing 체크
-5. 각 모듈마다 환경에 맞게 DB 설정
+5. jpa-basic은 resources/META-INF/persistence.xml에서 DB 설정 , 나머지는 reources/application.yml을 통해 DB 설정
+
 
 ## QueryDSL 설정 
 1. 모든 세팅 완료 후./gradlew compileQuerydsl을 실행

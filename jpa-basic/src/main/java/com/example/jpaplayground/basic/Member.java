@@ -26,6 +26,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import jdk.jfr.Frequency;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
 /**
  * #jpabasic jpa에 대한 기본을 알려주는 클래스
@@ -38,6 +40,22 @@ import jdk.jfr.Frequency;
   initialValue = 1,
   allocationSize = 50 // 몇 개까지 미리 시퀀스를 땡겨올지, 미리 땡긴 후 그 다음부터는 DB가 아니라 메모리에서 시퀀스를 가지고 옴으로써 매 번 네트워크를 타고 시퀀스를 가져와야 하는 비용을 아낄 수 있다.
 )
+/**
+ * #jpabasic @DynamicInsert 데이터 삽입 시 Null이라면 쿼리에 포함하지 않기
+ *
+ * 기본 값이 있는 경우에 객체를 저장할 때 그 칼럼에 대해서는 값을 세팅하지 않는 경우가 있다.
+ * 이 때 JPA는 그런 것을 상관하지 않고 그 칼럼은 Null 값으로 세팅하여 insert를 진행한다.
+ * @DynamicInsert를 사용하면 Null값인 칼럼은 제외하고 insert 쿼리를 날린다.
+ * @DynamicUpdate를 사용하면 Null값인 칼럼은 제외하고 update 쿼리를 날린다.
+ *
+ * 이 방식 이외에도 @PrePersist를 이용할 수 있다.
+ *
+ *  @PrePersist
+ *  public void prePersist() {
+ *      this.likeCount = this.likeCount == null ? 0 : this.likeCount;
+ *  }
+ */
+@DynamicInsert
 public class Member extends BaseEntity {
 
     @Id
@@ -69,6 +87,8 @@ public class Member extends BaseEntity {
             unique = false, length = 10, columnDefinition = "varchar(100) default 'EMTPY'") // 위 옵션 외에 나머지는 애플리케이션이 처음 실행될 때 DDL 생성하는데만 영향을 준다.
     private String userName;
 
+    @Column(columnDefinition = "integer default 1") // 기본값 넣는 방법
+//    @ColumnDefault("1")
     private Integer age;
 
     @Enumerated(EnumType.STRING) //Enum type을 DB에 매핑할 때 DDL 자동 생성하는데 쓰임, Ordinal은 데이터가 꼬일 수 있으므로 절대 쓰지 말 것
@@ -91,30 +111,51 @@ public class Member extends BaseEntity {
      * 양방향 매핑의 경우 다대일 관계에서 '일'에 해당하는 부분에도 참조 변수가 들어가게 된다 'List<Member> members' 처럼
 
      * 이 때 연관관계의 주인을 정해야 한다.
-     * 연관관계의 주인이란 어떤 엔티티가 실제로 외래키의 관리를 담당할 것인가를 말한다.
+     * 연관관계의 주인이란 어떤 엔티티가 실제로 '외래키'의 관리를 담당할 것인가를 말한다. 주인의 값을 변경할 때만 외래키가 업데이트된다.
+     * 그냥 두 엔티티에서 외래키 업데이트를 다 진행할 수 있으면 되지 않나? 라고 생각할 수 있다. JPA 입장에서 헷갈리기 때문에 안된다.
+     * 예를 들어 Member.setTeam(TeamA) 이런 식으로 Member는 팀을 세팅했는데 Team은 값을 세팅 안한 경우, JPA는 외래키를 넣어야 할지 말아야할지 알 수 없다.
+     *
      * 주인을 정하기 위해서는 연관관계의 주인이 아닌 쪽에 @OneToMany(mappedBy = "team")처럼 mappedBy 옵션을 명시해주면 된다.
 
      * 연관관계의 주인이 아닌 쪽은 값을 읽기만 가능하고 등록이나 수정 등은 하지 못한다.
+     * Member와 Team의 관계에서 Member가 주인이라면 Member.setTeam()할 때만 외래키가 업데이트되고 Team.getMembers().addMember()는 외래키에 영향주지 않는다.
      * 즉 트랜잭션 안에서 members.add(new Member(1L, "some")등을 하더라도 db에 반영되지 않는다.
      * 오직 Member에서 setTeam을 해야 한다.
 
      * 다대일 관계에서 연관관계의 주인은 누구나 될 수 있지만 Many쪽에서 연관관계 주인을 가져가는 것이 좋다. 여기서는 Member가 Many 쪽이다.
      * 왜냐하면 실제 DB에는 Member 테이블에 외래키가 들어 있을 것이기 때문이다. Member 엔티티를 수정하거나 등록했을 때 Member 테이블이 업데이트 되는 것이
-     * 직관적이고 이해하기 쉽다. 그렇지 않다면 Team 엔티티를 수정했는데 Member 쪽으로 update 쿼리가 나가고 그럴 것이다.
+     * 직관적이고 이해하기 쉽다. 그렇지 않다면 Team 엔티티를 수정했는데(Team.getMembers().addMember()) Member 쪽으로 update 쿼리가 나가게 되고 이는 직관적이지 않다.
 
      * - 실전 팁
 
-     * * 먼저 다대일 단방향 매핑으로 다 진행하고 정말 필요할 때 양방향 매핑을 맺도록 하자. 왜냐하면 양방향 매핑은 신경써야 할 게 많다.
+     * 먼저 다대일 단방향 매핑으로 다 진행하고 정말 필요할 때 양방향 매핑을 맺도록 하자. 왜냐하면 양방향 매핑은 신경써야 할 게 많다.
      * 이를 테면 toString()에서 무한루프가 발생 안되도록 해주어야 하고, 연관관계 편의 메서드(changeTeam)도 정의해야 한다.
-     * 특히 JPQL을 쓸 때 앙방향 매핑을 쓰게 될 것이다.
+     *
+     * - 양방향 매핑은 언제 쓸까?
+     *
+     *  복잡한 조회 쿼리 진행시 양방향 매핑이 편리할 때가 있다.
+     *  예를 들어 team 1:N member 이런 관계가 있을 때 team과 member를 fetch join으로 한번에 조회하고 싶은 경우다.
 
      * * 일대다 양방향도 JPA에서 공식적으로 지원하는 것은 아니지만 만들 수 있다.
      * 이 때는 @OneToMany쪽에 mappedBy를 빼고 @JoinColumn을 넣어주고,
      * @ManyToOne에서는 @JoinColumn(name = "team_id", insertable = false, updatable = false)로 해주면 된다.
      */
     @ManyToOne(fetch = FetchType.LAZY) // 기본은 지연 로딩으로 바르고 즉시 로딩이 필요하면 fetch join 사용
-    @JoinColumn(name = "team_id") // 어떤 컬럼이 외래키로 조인에 사용될 수 있는지
+    @JoinColumn(name = "team_id") //team이란 객체는 team_id라는 외래키 칼럼으로 관계를 맺고 있다고 선언해준다.
     private Team team;
+
+    /**
+     * #jpabasic 일대다 단방향 연관 관계
+     *
+     * 일대다 단방향 연관관계는 Team 쪽에 'List<Member> members'로 연관관계를 맺고 Member 쪽에는 아무런 Team에 참조를 갖지 않는 것
+     * 웬만하면 이 관계는 사용하지 않는게 좋다. 왜냐하면 Team을 만들고 members에 member를 추가한 후 insert한다고 해보자.
+     * 이 때 일단 Team을 넣는 insert 쿼리가 한 번 나가고, 연관된 Member의 외래키를 방금 넣은 team의 id로 변경하는 update 쿼리가 추가적으로 나간다.
+     * 따라서 비효율적이며 Team에만 손댔는데 Member 테이블에 쿼리가 나가므로 직관적이지 않다.
+     * 다대일 단방향일 경우 쿼리 한 번에 해결되고 직관적이다.
+     *
+       일대다 단방향 연관관계의 경우 @JoinColumn을 사용하지 않으면 외래키가 아니라 연결테이블을 사용하려 하므로 꼭 선언해야 한다.
+       다대일 단방향의 경우에는 생략하면 외래키 칼럼을 추론해서 이용하기도 함.
+     */
 
     /**
      * #jpabasic @OneToOne 일대일 연관 관계를 매핑
@@ -142,23 +183,40 @@ public class Member extends BaseEntity {
     /**
      * #jpabasic Cascade, OrphanRemoval
      *
-     * - Cascade  : 부모를 entityManager.persist() 또는 삭제 할 때 자식도 같이 하게 해주어 편리하게 해주는 옵션
+     * - Cascade : 부모를 entityManager.persist() 또는 삭제 할 때 자식도 같이 하게 해주어 편리하게 해주는 옵션
      *
-     * Cascade .ALL의 경우 저장과 삭제 둘 다.
+     *
+     * Cascade.ALL의 경우 저장과 삭제 둘 다.
      * 반드시 부모와  자식이 완전히 종속된 관계에서만 사용한다.
      * 다른 엔티티가  이 자식을 알고 있다면 사용하면 안됨. 특정 엔티티가 개인 소유할 때 !
-     * ophanRe movel은 부모가 삭제 되었을 대 뿐만이 아니라 관계가 끊어졌을 대도 자식이 삭제 된다는 점에서 차이가 있다.
+     * orphanRemovel은 부모가 삭제 되었을 때 뿐만이 아니라 관계가 끊어졌을 때도 자식이 삭제 된다는 점에서 차이가 있다.
      *
-     * Cascade-.PERSIST의 경우 저장만 같이.
+     * Cascade.PERSIST의 경우 저장만 같이.
      *
      * - orphanRemoval : 부모가 없어진 엔티티는 DB에 delete 쿼리가 나가게끔 동작시키는 옵션.
      * 예를 들어 balls.remove(2) 할 경우 2번 인덱스의 자식은 고아가 되고 delete 쿼리가 나가게 된다.
      *
      * 반드시 특정 엔티티가 개인 소유할 때만 조심해서 써야 한다. 안 그러면 다른 엔티티도 참조하고 있는 엔티티인데
      * 어느 엔티티에 의하여 잘못 삭제될 수도 있기 때문이다.
+     * 또한 어떤 엔티티를 저장할 때, 연관된 어떤 엔티티들이 함께 저장될까? 를 계속 코드를 보며 추적해야 하는 단점이 있다.
+     * 따라서 웬만하면 쓰지 않는 것이 권장된다.
+     * 하지만 DDD 진행시 Aggregate Root 개념과 관련하여 요긴하게 쓸 수도 있다.
     */
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ball> balls = new ArrayList<>(); // 관례상 바로 초기화를 해주는 것이 좋다. 그래야 예기치 못한 Null예외가 터지지 않는다.
+
+    /**
+     * #jpabasic 일대다 단방향
+     *
+     * 일대다 단방향 관계는 피하는 것이 좋다.
+     * 왜냐하면 외래키는 Like 테이블에 존재하지만 이 외래키를 관리하는 주체는 Member이기 때문에 직관적이지 않아 유지보수가 어렵다.
+     * 또 Like는 Member를 모른다. 따라서 insert시 member_id를 같이 넣을 수 없다. 항상 Member가 likes.add()할 때만 Like 테이블에 update 쿼리를 날리는 방식으로 동작한다.
+     *
+     * 즉 유지보수에 어렵고 추가적인 update 쿼리가 나가기 때문에 일대다 단방향은 피하는 것이 좋고, 이럴 때는 객체지향적으로 조금 손해를 보더라도 다대일 양방향 관계로 가져가자.
+     */
+    @OneToMany
+    @JoinColumn(name = "member_id")
+    private List<Like> likes = new ArrayList<>(); // 관례상 바로 초기화를 해주는 것이 좋다. 그래야 예기치 못한 Null예외가 터지지 않는다.
 
 
     /**
@@ -170,11 +228,12 @@ public class Member extends BaseEntity {
      * 연관관계 편의 메서드는 Member와 Team 둘 중에 한 쪽에만 만든다. 왜냐하면 잘못하면 무한루프 걸릴 수도 있고 신경쓸 게 많아진다.
     */
     private void changeTeam(Team team){
+        if (this.team != null) { // 기존에 이미 팀이 존재한다면
+            this.team.getMembers().remove(this); // 관계를 끊는다.
+        }
+
         this.team = team;
         team.getMembers().add(this);
-
-        //... 복잡하게 할 때는 team에 이전에 넣어 놓은 이 Member랑 같은 id를 가진 Member가 있는지 확인하고
-        //... 이렇게 작업이 필요할 수도 있음
     }
 
     public Member() { // protected 이상의 기본 생성자는 필수, 내부적으로 Reflection을 쓰서 동적으로 객체를 생성해내야 하기 때문에

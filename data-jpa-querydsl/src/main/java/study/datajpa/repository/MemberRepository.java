@@ -53,7 +53,7 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
     /**
      * #datajpa @Query로 인터페이스 위에 바로 쿼리 때려박기
      *
-     * 실제로는 이름 없은 NamedQuery와 동일하다. 따라서 컴파일 시점에 문법 오류를 잡아준다.
+     * 실제로는 이름 없는 NamedQuery와 동일하다. 따라서 컴파일 시점에 문법 오류를 잡아준다.
      * 예를 들어 아래에 m.name을 m.username으로 바꾸면 에러가 뜬다.
      *
      * - 간단할 때는 윗 방식을 사용하고 조금 복잡할 때는 이 방식을 사용하자.
@@ -136,13 +136,12 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
      *     - 참고 : https://www.inflearn.com/questions/188207/modifying%EC%97%90-%EA%B4%80%ED%95%9C-%EC%A7%88%EB%AC%B8
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-
     @Query("update Member m set m.age = m.age + 1 where m.age > :age")
     int bulkAgePlus1GreaterThan(@Param("age") int age);
 
 
     /**
-     * #datajpa @EntityGraph - fetch join을 data jpa에서 편리하게 쓰자. 간단할 땐 @EntityGraph 복잡할 땐 fetch join
+     * #datajpa @EntityGraph - fetch join을 data jpa에서 편리하게 쓰자. 쿼리가 간단할 땐 @EntityGraph 복잡할 땐 fetch join
      *
      * fetch join으로 left outer join해서 나간다.
      */
@@ -170,9 +169,26 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
 
     /**
      * #datajpa Lock - for update를 쓰는 비관적 락 또는 낙관적 락
+     *
+     * <@Version을 쓰면 되는데 LockModeType.OPTIMISTIC이 존재하는 이유>
+     *
+     * Entity에 @Version이 있는 칼럼만 넣어도 낙관적 락이 동작한다. LockModeType.NONE은 아무 의미 없다.
+     * @Version이 존재하면 @Lock이 있는 쿼리로 Entity를 조회하지 않았더라도 Update가 일어날 때 버전을 같이 체크한다.
+     *
+     * - 그럼 LockModeType.OPTIMISTIC이 있는 쿼리는 뭐가 다를까?
+     * Entity를 조회하고 수정을 하지 않더라도 항상 커밋하기 직전에 SELECT로 버전을 가져와서 처음 가져왔을 때의 버전과 같은지 비교한다.
+     * 그리고 버전이 달라졌다면 예외를 터뜨린다.
+     *
+     * - 왜 이렇게 동작할까?
+     * 만약 트랜잭션 진행 도중 다른 트랜잭션이 동일한 엔티티에 수정했다면 예외를 일으키게 되고
+     * 이렇게 동작함으로써 DIRTY-READ와 NON-REPEATABLE-READ를 방지할 수 있기 때문이다.(NONE 모드라면 수정을 해야만 버전 체크를 해서 조회만 할 경우엔 앞 문제를 방지할 수 없다.)
+     *
+     * - 한계점
+     * 하지만 어차피 DB의 Isolation Level은 최소 READ COMMITTED 이상이고 영속성 컨텍스트를 통해서 JPA가 자체적으로 REPEATABLE READ 또한 제공해주기 때문에
+     * 위와 같은 효과가 굳이 필요한가 싶다. 따라서 단순히 @Version 칼럼만 추가해주는 것만으로 낙관적 락을 구현하기 충분하다고 생각한다.
      */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<Member> findMemByName(String name);
+    @Lock(LockModeType.OPTIMISTIC)
+    Optional<Member> findWithLockById(Long id);
 
     /**
      * #datajpa Projection - 원하는 칼럼만 콕 찝어서 갖고오고 싶을 때

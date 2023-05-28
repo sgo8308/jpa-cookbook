@@ -1,6 +1,7 @@
 package study.datajpa.controller;
 
 
+import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +22,7 @@ public class MemberController {
      * #datajpa 페이징을 컨트롤러에서 쉽게 적용 가능하다.
      *
      * - 요청시
-     * GET http://localhost:8080/member/10?page=0&size=3&sort=id,desc&sort=username,desc 과 같은 식으로 요청할 때
+     * GET http://localhost:8080/member/10?page=0&size=3&sort=id,desc&sort=name,desc 과 같은 식으로 요청할 때
      * 알아서 PageRequest 객체를 만들어서 Pageable 파라미터에 집어 넣어준다.
      *
      * - 반환시
